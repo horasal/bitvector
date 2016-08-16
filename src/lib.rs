@@ -86,6 +86,14 @@ impl BitVector {
         }
     }
 
+    // new bitvector contains all elements
+    pub fn ones(bits: usize) -> Self {
+        BitVector {
+            bits: bits,
+            vector: vec![u64::max_value(); u64s(bits)],
+        }
+    }
+
     /// Clear all elements from a bitvector
     pub fn clear(&mut self) {
         for p in &mut self.vector { *p = 0; }
@@ -231,7 +239,7 @@ impl BitVector {
     /// for example:
     ///
     /// ```
-    /// extarn crate bitvector;
+    /// extern crate bitvector;
     /// use bitvector::*;
     ///
     /// fn main() {
@@ -239,7 +247,7 @@ impl BitVector {
     ///     bitvec.insert(2);
     ///     bitvec.insert(3);
     ///     // The bitvector becomes: 0x00 0x00 0x00 0x0C
-    ///     assert_eq!(bitvec.iter().collect::<Vec<>>(), vec![2,3]);
+    ///     assert_eq!(bitvec.iter().collect::<Vec<_>>(), vec![2,3]);
     ///     // collected vector will contains the real element not the bit.
     /// }
     /// ```
@@ -651,6 +659,14 @@ mod tests {
         for index in 65 .. 128 {
             assert!(vec1.insert(index));
             assert!(!vec1.insert(index));
+        }
+    }
+
+    #[test]
+    fn test_ones() {
+        let bvec = BitVector::ones(60);
+        for i in 0 .. 60 {
+            assert!(bvec.contains(i));
         }
     }
 }
