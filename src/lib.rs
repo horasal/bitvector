@@ -86,11 +86,14 @@ impl BitVector {
         }
     }
 
-    // new bitvector contains all elements
+    /// new bitvector contains all elements
     pub fn ones(bits: usize) -> Self {
+        let (word, offset) = word_offset(bits);
+        let mut bvec = vec![u64::max_value(); word];
+        bvec.push(u64::max_value() >> (64 - offset));
         BitVector {
             bits: bits,
-            vector: vec![u64::max_value(); u64s(bits)],
+            vector: bvec,
         }
     }
 
@@ -256,6 +259,7 @@ impl BitVector {
             iter: self.vector.iter(),
             current: 0,
             idx: 0,
+            size: self.bits,
         }
     }
 }
@@ -265,11 +269,13 @@ pub struct BitVectorIter<'a> {
     iter: ::std::slice::Iter<'a, u64>,
     current: u64,
     idx: usize,
+    size: usize,
 }
 
 impl<'a> Iterator for BitVectorIter<'a> {
     type Item = usize;
     fn next(&mut self) -> Option<usize> {
+        if self.idx >= self.size { return None; }
         while self.current == 0 {
             self.current = if let Some(&i) = self.iter.next() {
                 if i == 0 {
@@ -668,6 +674,7 @@ mod tests {
         for i in 0 .. 60 {
             assert!(bvec.contains(i));
         }
+        assert_eq!(bvec.iter().collect::<Vec<_>>(), (0..60).collect::<Vec<_>>());
     }
 }
 
