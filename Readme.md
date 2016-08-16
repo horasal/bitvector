@@ -15,7 +15,7 @@ to generate a local copy.
 Add the following line to `[dependencies]` in your `Cargo.toml` file:
 
 ```toml
-bitvector = {git = "https://github.com/zhaihj/bitvector", branch = "master"}
+bitvector = 0.1
 ```
 
 Then you can use the `BitVector`:
