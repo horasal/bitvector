@@ -102,6 +102,7 @@ impl BitVector {
     ///
     /// self \cap {0, 1, ... , bit - 1} == other \cap {0, 1, ... ,bit - 1}
     pub fn eq_left(&self, other: &BitVector, bit: usize) -> bool {
+        if bit == 0 { return true; }
         let (word, offset) = word_offset(bit - 1);
         /*
          * We can also use slice comparison, which only take 1 line.
@@ -143,7 +144,7 @@ impl BitVector {
         changed
     }
 
-    fn len(&self) -> usize { self.bits }
+    pub fn len(&self) -> usize { self.bits }
 
     pub fn union(&self, other: &BitVector) -> BitVector {
         assert_eq!(self.len(), other.len());
