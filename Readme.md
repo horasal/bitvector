@@ -2,6 +2,13 @@
 
 This crate is a modification of [librustc_data_structures/bitvec.rs](https://github.com/rust-lang/rust/blob/master/src/librustc_data_structures/bitvec.rs) for set operator support.
 
+### Documentation
+
+Visit the [online documentation](http://zhaihj.github.io/doc/bitvector/index.html) or run
+
+```cargo doc```
+
+to generate a local copy.
 
 ### How to use
 
