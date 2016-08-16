@@ -1,0 +1,9 @@
+[package]
+name = "bitvector"
+version = "0.1.0"
+authors = ["Hongjie Zhai <zhaihj@live.jp>"]
+
+[dependencies]
+
+[features]
+unstable=[]
