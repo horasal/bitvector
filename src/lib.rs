@@ -19,6 +19,10 @@ impl fmt::Display for BitVector {
     }
 }
 
+impl PartialEq for BitVector {
+    fn eq(&self, other: &BitVector) -> bool { self.vector == other.vector }
+}
+
 impl BitVector {
     pub fn new(bits: usize) -> Self {
         BitVector {
@@ -34,6 +38,26 @@ impl BitVector {
     pub fn contains(&self, bit: usize) -> bool {
         let (word, mask) = word_mask(bit);
         (self.vector[word] & mask) != 0
+    }
+
+    pub fn as_slice(&self) -> &[u64] { self.vector.as_slice() }
+
+    pub fn eq_left(&self, other: &BitVector, bit: usize) -> bool {
+        let (word, offset) = word_offset(bit - 1);
+        /*
+         * We can also use slice comparison, which only take 1 line.
+         * However, it has been reported that the `Eq` implementation of slice
+         * is extremly slow.
+         *
+         * self.vector.as_slice()[0 .. word] == other.vector.as_slice[0 .. word]
+         */
+        for i in 0 .. word {
+            if self.vector[i] != other.vector[i] {
+                return false
+            }
+        }
+
+        (self.vector[word] << (63 - offset)) == (other.vector[word] << (63 - offset))
     }
 
     pub fn insert(&mut self, bit: usize) -> bool {
@@ -278,6 +302,10 @@ fn u64s(elements: usize) -> usize {
     (elements + 63) / 64
 }
 
+fn word_offset(index: usize) -> (usize, usize) {
+    (index / 64, index % 64)
+}
+
 fn word_mask(index: usize) -> (usize, u64) {
     let word = index / 64;
     let mask = 1 << (index % 64);
@@ -480,6 +508,39 @@ mod tests {
         bitvec.insert(255);
         bitvec.insert(319);
         assert_eq!(bitvec.iter().collect::<Vec<_>>(), [0, 127, 191, 255, 319]);
+    }
+
+    #[test]
+    fn eq_left() {
+        let mut bitvec = BitVector::new(50);
+        for i in vec![0,1,3,5,11,12,19,23] { bitvec.insert(i); }
+        let mut bitvec2 = BitVector::new(50);
+        for i in vec![0,1,3,5,7,11,13,17,19,23] { bitvec2.insert(i); }
+
+        assert!(bitvec.eq_left(&bitvec2, 1));
+        assert!(bitvec.eq_left(&bitvec2, 2));
+        assert!(bitvec.eq_left(&bitvec2, 3));
+        assert!(bitvec.eq_left(&bitvec2, 4));
+        assert!(bitvec.eq_left(&bitvec2, 5));
+        assert!(bitvec.eq_left(&bitvec2, 6));
+        assert!(bitvec.eq_left(&bitvec2, 7));
+        assert!(!bitvec.eq_left(&bitvec2, 8));
+        assert!(!bitvec.eq_left(&bitvec2, 9));
+        assert!(!bitvec.eq_left(&bitvec2, 50));
+    }
+
+    #[test]
+    fn eq() {
+        let mut bitvec = BitVector::new(50);
+        for i in vec![0,1,3,5,11,12,19,23] { bitvec.insert(i); }
+        let mut bitvec2 = BitVector::new(50);
+        for i in vec![0,1,3,5,7,11,13,17,19,23] { bitvec2.insert(i); }
+        let mut bitvec3 = BitVector::new(50);
+        for i in vec![0,1,3,5,11,12,19,23] { bitvec3.insert(i); }
+
+        assert!(bitvec != bitvec2);
+        assert!(bitvec == bitvec3);
+        assert!(bitvec2 != bitvec3);
     }
 
     #[test]
