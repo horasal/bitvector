@@ -2,8 +2,13 @@
 name = "bitvector"
 version = "0.1.0"
 authors = ["Hongjie Zhai <zhaihj@live.jp>"]
-
-[dependencies]
+description = "BitVector implementation in Rust"
+documentation = "http://zhaihj.github.io/doc/bitvector/index.html"
+homepage = "https://github.com/zhaihj"
+repository = "https://github.com/zhaihj/bitvector"
+readme = "Readme.md"
+license = "MIT"
+license-file = "LICENSE"
 
 [features]
 unstable=[]
