@@ -1,9 +1,61 @@
-#![cfg_attr(feature = "unstable", feature(test))]
+//! ### BitVector Module
+//! 
+//! BitVector uses one bit to represent a bool state.
+//! BitVector is useful for the programs that need fast set operation (intersection, union,
+//! difference), because that all these operations can be done with simple bitand, bitor, bitxor.
+//!
+//! Usually, the length of a BitVector should not be changed after constructed, for example:
+//!
+//! ```
+//! extern crate bitvector;
+//! use bitvector::*;
+//!
+//! fn main(){
+//!   // a bitvector contains 30 elements
+//!   let mut bitvec = BitVector::new(30);
+//!   // add 10 elements
+//!   for i in 0 .. 10 { bitvec.insert(i); }
+//!   // you can use Iterator to iter over all the elements
+//!   assert_eq!(bitvec.iter().collect::<Vec<_>>(), vec![0,1,2,3,4,5,6,7,8,9]);
+//!
+//!   let mut bitvec2 = BitVector::new(30);
+//!   for i in 5 .. 15 { bitvec2.insert(i); }
+//!
+//!   // set union
+//!   assert_eq!(bitvec.union(&bitvec2).iter().collect::<Vec<_>>(),
+//!              vec![0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]);
+//!   
+//!   // set intersection 
+//!   assert_eq!(bitvec.intersection(&bitvec2).iter().collect::<Vec<_>>(),
+//!              vec![5,6,7,8,9]);
+//!
+//!   // set difference 
+//!   assert_eq!(bitvec.difference(&bitvec2).iter().collect::<Vec<_>>(),
+//!              vec![0,1,2,3,4]);
+//!
+//!   // you can also use `&`(intersection) `|`(union) and `^`(difference) 
+//!   // to do the set operations
+//!   assert_eq!((&bitvec ^ &bitvec2).iter().collect::<Vec<_>>(),
+//!              vec![0,1,2,3,4]);
+//! }
+//! ```
+//!
+//! ### Implementation Details
+//!
+//! BitVector is realized with a `Vec<u64>`. Each bit of an u64 represent if a elements exists.
+//! BitVector always increases from the end to begin, it meats that if you add element `0` to an
+//! empty bitvector, then the `Vec<u64>` will change from `0x00` to `0x01`.
+//!
+//! Of course, if the real length of set can not be divided by 64, it will have a `len() % 64` bit
+//! memory waste.
+//!
 
+#![cfg_attr(feature = "unstable", feature(test))]
 use std::ops::*;
 use std::fmt;
 use std::iter::FromIterator;
 
+/// Bitvector
 #[derive(Clone, Debug)]
 pub struct BitVector {
     bits: usize,
@@ -20,10 +72,13 @@ impl fmt::Display for BitVector {
 }
 
 impl PartialEq for BitVector {
-    fn eq(&self, other: &BitVector) -> bool { self.vector == other.vector }
+    fn eq(&self, other: &BitVector) -> bool { 
+        self.eq_left(other, self.bits)
+    }
 }
 
 impl BitVector {
+    /// Build a new empty bitvector 
     pub fn new(bits: usize) -> Self {
         BitVector {
             bits: bits,
@@ -31,17 +86,21 @@ impl BitVector {
         }
     }
 
+    /// Clear all elements from a bitvector
     pub fn clear(&mut self) {
         for p in &mut self.vector { *p = 0; }
     }
 
+    /// If `bit` belongs to set, return `true`, 
+    /// else return `false`
     pub fn contains(&self, bit: usize) -> bool {
         let (word, mask) = word_mask(bit);
         (self.vector[word] & mask) != 0
     }
 
-    pub fn as_slice(&self) -> &[u64] { self.vector.as_slice() }
-
+    /// compare if the following is true:
+    ///
+    /// self \cap {0, 1, ... , bit - 1} == other \cap {0, 1, ... ,bit - 1}
     pub fn eq_left(&self, other: &BitVector, bit: usize) -> bool {
         let (word, offset) = word_offset(bit - 1);
         /*
@@ -60,6 +119,7 @@ impl BitVector {
         (self.vector[word] << (63 - offset)) == (other.vector[word] << (63 - offset))
     }
 
+    /// insert a new element to set
     pub fn insert(&mut self, bit: usize) -> bool {
         let (word, mask) = word_mask(bit);
         let data = &mut self.vector[word];
@@ -69,6 +129,7 @@ impl BitVector {
         new_value != value
     }
 
+    /// import elements from another bitvector
     pub fn insert_all(&mut self, all: &BitVector) -> bool {
         assert!(self.vector.len() == all.vector.len());
         let mut changed = false;
@@ -82,7 +143,7 @@ impl BitVector {
         changed
     }
 
-    pub fn len(&self) -> usize { self.bits }
+    fn len(&self) -> usize { self.bits }
 
     pub fn union(&self, other: &BitVector) -> BitVector {
         assert_eq!(self.len(), other.len());
@@ -120,6 +181,8 @@ impl BitVector {
         }
     }
 
+    /// Union operator by modifying `self`
+    /// No extra memory allocation
     pub fn union_inplace(&mut self, other: &BitVector) -> &mut BitVector {
         assert_eq!(self.len(), other.len());
         for (i,v) in self.vector.iter_mut().enumerate() {
@@ -128,6 +191,8 @@ impl BitVector {
         self
     }
 
+    /// Intersection operator by modifying `self`
+    /// No extra memory allocation
     pub fn intersection_inplace(&mut self, other: &BitVector) -> &mut BitVector {
         assert_eq!(self.len(), other.len());
         for (i,v) in self.vector.iter_mut().enumerate() {
@@ -136,6 +201,8 @@ impl BitVector {
         self
     }
 
+    /// Difference operator by modifying `self`
+    /// No extra memory allocation
     pub fn difference_inplace(&mut self, other: &BitVector) -> &mut BitVector {
         assert_eq!(self.len(), other.len());
         for (i,v) in self.vector.iter_mut().enumerate() {
@@ -159,6 +226,22 @@ impl BitVector {
         }
     }
 
+    /// Return a iterator of element based on current bitvector
+    /// for example:
+    ///
+    /// ```
+    /// extarn crate bitvector;
+    /// use bitvector::*;
+    ///
+    /// fn main() {
+    ///     let mut bitvec = BitVector::new(5);
+    ///     bitvec.insert(2);
+    ///     bitvec.insert(3);
+    ///     // The bitvector becomes: 0x00 0x00 0x00 0x0C
+    ///     assert_eq!(bitvec.iter().collect::<Vec<>>(), vec![2,3]);
+    ///     // collected vector will contains the real element not the bit.
+    /// }
+    /// ```
     pub fn iter<'a>(&'a self) -> BitVectorIter<'a> {
         BitVectorIter {
             iter: self.vector.iter(),
@@ -168,6 +251,7 @@ impl BitVector {
     }
 }
 
+/// Iterator for BitVector
 pub struct BitVectorIter<'a> {
     iter: ::std::slice::Iter<'a, u64>,
     current: u64,
