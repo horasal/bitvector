@@ -46,7 +46,7 @@
 //! BitVector always increases from the end to begin, it meats that if you add element `0` to an
 //! empty bitvector, then the `Vec<u64>` will change from `0x00` to `0x01`.
 //!
-//! Of course, if the real length of set can not be divided by 64, it will have a `len() % 64` bit
+//! Of course, if the real length of set can not be divided by 64, it will have a `capacity() % 64` bit
 //! memory waste.
 //!
 
@@ -97,6 +97,11 @@ impl BitVector {
         }
     }
 
+    pub fn len(&self) -> usize {
+        self.vector.iter().fold(0usize, 
+                         |x0, x| x0 + x.count_ones() as usize)
+    }
+
     /// Clear all elements from a bitvector
     pub fn clear(&mut self) {
         for p in &mut self.vector { *p = 0; }
@@ -108,6 +113,7 @@ impl BitVector {
         let (word, mask) = word_mask(bit);
         (self.vector[word] & mask) != 0
     }
+
 
     /// compare if the following is true:
     ///
@@ -141,6 +147,16 @@ impl BitVector {
         new_value != value
     }
 
+    /// remove an element from set
+    pub fn remove(&mut self, bit: usize) -> bool {
+        let (word, mask) = word_mask(bit);
+        let data = &mut self.vector[word];
+        let value = *data;
+        let new_value = value & !mask;
+        *data = new_value;
+        new_value != value
+    }
+
     /// import elements from another bitvector
     pub fn insert_all(&mut self, all: &BitVector) -> bool {
         assert!(self.vector.len() == all.vector.len());
@@ -155,39 +171,39 @@ impl BitVector {
         changed
     }
 
-    pub fn len(&self) -> usize { self.bits }
+    pub fn capacity(&self) -> usize { self.bits }
 
     pub fn union(&self, other: &BitVector) -> BitVector {
-        assert_eq!(self.len(), other.len());
+        assert_eq!(self.capacity(), other.capacity());
         BitVector {
-            bits: self.len(),
+            bits: self.capacity(),
             vector: self.vector.iter().enumerate()
             .map(|(i,x)| x | other.vector[i]).collect()
         }
     }
 
     pub fn intersection(&self, other: &BitVector) -> BitVector {
-        assert_eq!(self.len(), other.len());
+        assert_eq!(self.capacity(), other.capacity());
         BitVector {
-            bits: self.len(),
+            bits: self.capacity(),
             vector: self.vector.iter().enumerate()
             .map(|(i,x)| x & other.vector[i]).collect()
         }
     }
 
     pub fn difference(&self, other: &BitVector) -> BitVector {
-        assert_eq!(self.len(), other.len());
+        assert_eq!(self.capacity(), other.capacity());
         BitVector {
-            bits: self.len(),
+            bits: self.capacity(),
             vector: self.vector.iter().enumerate()
             .map(|(i,x)| (x ^ other.vector[i]) & x).collect()
         }
     }
 
     pub fn difference_d(&self, other: &BitVector) -> BitVector {
-        assert_eq!(self.len(), other.len());
+        assert_eq!(self.capacity(), other.capacity());
         BitVector {
-            bits: self.len(),
+            bits: self.capacity(),
             vector: self.vector.iter().enumerate()
             .map(|(i,x)| x ^ other.vector[i]).collect()
         }
@@ -196,7 +212,7 @@ impl BitVector {
     /// Union operator by modifying `self`
     /// No extra memory allocation
     pub fn union_inplace(&mut self, other: &BitVector) -> &mut BitVector {
-        assert_eq!(self.len(), other.len());
+        assert_eq!(self.capacity(), other.capacity());
         for (i,v) in self.vector.iter_mut().enumerate() {
             *v |= other.vector[i]
         }
@@ -206,7 +222,7 @@ impl BitVector {
     /// Intersection operator by modifying `self`
     /// No extra memory allocation
     pub fn intersection_inplace(&mut self, other: &BitVector) -> &mut BitVector {
-        assert_eq!(self.len(), other.len());
+        assert_eq!(self.capacity(), other.capacity());
         for (i,v) in self.vector.iter_mut().enumerate() {
             *v &= other.vector[i]
         }
@@ -216,7 +232,7 @@ impl BitVector {
     /// Difference operator by modifying `self`
     /// No extra memory allocation
     pub fn difference_inplace(&mut self, other: &BitVector) -> &mut BitVector {
-        assert_eq!(self.len(), other.len());
+        assert_eq!(self.capacity(), other.capacity());
         for (i,v) in self.vector.iter_mut().enumerate() {
             *v = (*v ^ other.vector[i]) & *v
         }
@@ -224,7 +240,7 @@ impl BitVector {
     }
 
     pub fn difference_d_inplace(&mut self, other: &BitVector) -> &mut BitVector {
-        assert_eq!(self.len(), other.len());
+        assert_eq!(self.capacity(), other.capacity());
         for (i,v) in self.vector.iter_mut().enumerate() {
             *v ^= other.vector[i]
         }
@@ -640,6 +656,17 @@ mod tests {
         assert!(bitvec != bitvec2);
         assert!(bitvec == bitvec3);
         assert!(bitvec2 != bitvec3);
+    }
+
+    #[test]
+    fn remove() {
+        let mut bitvec = BitVector::new(50);
+        for i in vec![0,1,3,5,11,12,19,23] { bitvec.insert(i); }
+        assert!(bitvec.contains(3));
+        bitvec.remove(3);
+        assert!(!bitvec.contains(3));
+        assert_eq!(bitvec.iter().collect::<Vec<_>>(),
+                   vec![0,1,5,11,12,19,23]);
     }
 
     #[test]
