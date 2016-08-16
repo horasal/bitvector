@@ -1,12 +1,22 @@
 #![cfg_attr(feature = "unstable", feature(test))]
 
 use std::ops::*;
+use std::fmt;
 use std::iter::FromIterator;
 
 #[derive(Clone, Debug)]
 pub struct BitVector {
     bits: usize,
     vector: Vec<u64>,
+}
+
+impl fmt::Display for BitVector {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        try!(write!(f, "["));
+        try!(write!(f, "{}", self.iter().fold(String::new(), 
+                             |x0, x| x0 + &format!("{}, ", x))));
+        write!(f, "]")
+    }
 }
 
 impl BitVector {
