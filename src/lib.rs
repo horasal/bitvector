@@ -266,7 +266,7 @@ impl BitVector {
     pub fn union_inplace(&mut self, other: &BitVector) -> &mut BitVector {
         assert_eq!(self.capacity(), other.capacity());
         for (i,v) in self.vector.iter_mut().enumerate() {
-            *v |= other.vector[i]
+            if *v != u64::max_value() { *v |= other.vector[i]; }
         }
         self
     }
@@ -277,7 +277,7 @@ impl BitVector {
     pub fn intersection_inplace(&mut self, other: &BitVector) -> &mut BitVector {
         assert_eq!(self.capacity(), other.capacity());
         for (i,v) in self.vector.iter_mut().enumerate() {
-            *v &= other.vector[i]
+            if *v != 0 { *v &= other.vector[i]; }
         }
         self
     }
@@ -288,7 +288,7 @@ impl BitVector {
     pub fn difference_inplace(&mut self, other: &BitVector) -> &mut BitVector {
         assert_eq!(self.capacity(), other.capacity());
         for (i,v) in self.vector.iter_mut().enumerate() {
-            *v = (*v ^ other.vector[i]) & *v
+            if *v != 0 { *v = (*v ^ other.vector[i]) & *v }
         }
         self
     }
@@ -465,7 +465,6 @@ impl BitXorAssign for BitVector {
         self.difference_inplace(&rhs);
     }
 }
-
 
 fn u64s(elements: usize) -> usize {
     (elements + 63) / 64
