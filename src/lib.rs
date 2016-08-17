@@ -227,8 +227,8 @@ impl BitVector {
         BitVector {
             bits: self.capacity(),
             vector: self.vector.iter().enumerate()
-            .map(|(i,x)| x | other.vector[i]).collect()
-        }
+            .map(|(i,x)| if *x == u64::max_value() { u64::max_value() } 
+                 else { x | other.vector[i] }).collect() }
     }
 
     /// set intersection
@@ -237,7 +237,7 @@ impl BitVector {
         BitVector {
             bits: self.capacity(),
             vector: self.vector.iter().enumerate()
-            .map(|(i,x)| x & other.vector[i]).collect()
+            .map(|(i,x)| if *x == 0 { 0 } else { x & other.vector[i] }).collect()
         }
     }
 
@@ -247,7 +247,7 @@ impl BitVector {
         BitVector {
             bits: self.capacity(),
             vector: self.vector.iter().enumerate()
-            .map(|(i,x)| (x ^ other.vector[i]) & x).collect()
+            .map(|(i,x)| if *x == 0 { 0 } else { (x ^ other.vector[i]) & x }).collect()
         }
     }
 
@@ -565,11 +565,13 @@ mod tests {
         assert!(vec1.insert(3));
         assert!(!vec1.insert(3));
         assert!(vec2.insert(5));
+        assert!(vec2.insert(6));
         assert!(vec2.insert(64));
 
         let vec1 = vec1.union_inplace(&vec2);
 
         assert!(vec1.contains(3));
+        assert!(vec1.contains(6));
         assert!(!vec1.contains(4));
         assert!(vec1.contains(5));
         assert!(!vec1.contains(63));
@@ -584,6 +586,7 @@ mod tests {
         assert!(!vec1.insert(3));
         assert!(vec1.insert(5));
         assert!(vec2.insert(5));
+        assert!(vec2.insert(6));
         assert!(!vec2.insert(5));
         assert!(vec2.insert(64));
 
@@ -592,6 +595,7 @@ mod tests {
         assert!(!vec1.contains(3));
         assert!(!vec1.contains(4));
         assert!(vec1.contains(5));
+        assert!(!vec1.contains(6));
         assert!(!vec1.contains(63));
         assert!(!vec1.contains(64));
     }
@@ -604,12 +608,14 @@ mod tests {
         assert!(!vec1.insert(3));
         assert!(vec1.insert(5));
         assert!(vec2.insert(5));
+        assert!(vec2.insert(6));
         assert!(!vec2.insert(5));
         assert!(vec2.insert(64));
 
         let vec1 = vec1.difference_inplace(&vec2);
 
         assert!(vec1.contains(3));
+        assert!(!vec1.contains(6));
         assert!(!vec1.contains(4));
         assert!(!vec1.contains(5));
         assert!(!vec1.contains(63));
