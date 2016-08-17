@@ -106,7 +106,7 @@ impl BitVector {
     /// else return false.
     ///
     /// This method is averagely faster than `self.len() > 0`.
-    pub fn empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.vector.iter().all(|&x| x == 0)
     }
 
@@ -750,20 +750,20 @@ mod tests {
     }
 
     #[test]
-    fn empty() {
-        assert!(!BitVector::ones(60).empty());
-        assert!(!BitVector::ones(65).empty());
+    fn is_empty() {
+        assert!(!BitVector::ones(60).is_empty());
+        assert!(!BitVector::ones(65).is_empty());
         let mut bvec = BitVector::new(60);
         
-        assert!(bvec.empty());
+        assert!(bvec.is_empty());
 
         bvec.insert(5);
-        assert!(!bvec.empty());
+        assert!(!bvec.is_empty());
         bvec.remove(5);
-        assert!(bvec.empty());
+        assert!(bvec.is_empty());
         let mut bvec = BitVector::ones(65);
         for i in 0 .. 65 { bvec.remove(i); }
-        assert!(bvec.empty());
+        assert!(bvec.is_empty());
     }
 
     #[test]
