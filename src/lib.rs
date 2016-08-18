@@ -162,13 +162,8 @@ impl BitVector {
          *
          * self.vector.as_slice()[0 .. word] == other.vector.as_slice[0 .. word]
          */
-        for i in 0 .. word {
-            if self.vector[i] != other.vector[i] {
-                return false
-            }
-        }
-
-        (self.vector[word] << (63 - offset)) == (other.vector[word] << (63 - offset))
+        self.vector.iter().zip(other.vector.iter()).take(word).all(|(s1, s2)| s1 == s2)
+        && (self.vector[word] << (63 - offset)) == (other.vector[word] << (63 - offset))
     }
 
     /// insert a new element to set
@@ -226,9 +221,9 @@ impl BitVector {
         assert_eq!(self.capacity(), other.capacity());
         BitVector {
             bits: self.capacity(),
-            vector: self.vector.iter().enumerate()
-            .map(|(i,x)| if *x == u64::max_value() { u64::max_value() } 
-                 else { x | other.vector[i] }).collect() }
+            vector: self.vector.iter().zip(other.vector.iter())
+            .map(|(x1,x2)| if *x1 == u64::max_value() { u64::max_value() } 
+                 else { x1 | x2 }).collect() }
     }
 
     /// set intersection
@@ -236,8 +231,8 @@ impl BitVector {
         assert_eq!(self.capacity(), other.capacity());
         BitVector {
             bits: self.capacity(),
-            vector: self.vector.iter().enumerate()
-            .map(|(i,x)| if *x == 0 { 0 } else { x & other.vector[i] }).collect()
+            vector: self.vector.iter().zip(other.vector.iter())
+            .map(|(x1,x2)| if *x1 == 0 { 0 } else { x1 & x2 }).collect()
         }
     }
 
@@ -246,8 +241,8 @@ impl BitVector {
         assert_eq!(self.capacity(), other.capacity());
         BitVector {
             bits: self.capacity(),
-            vector: self.vector.iter().enumerate()
-            .map(|(i,x)| if *x == 0 { 0 } else { (x ^ other.vector[i]) & x }).collect()
+            vector: self.vector.iter().zip(other.vector.iter())
+            .map(|(x1,x2)| if *x1 == 0 { 0 } else { (x1 ^ x2) & x1 }).collect()
         }
     }
 
@@ -255,8 +250,8 @@ impl BitVector {
         assert_eq!(self.capacity(), other.capacity());
         BitVector {
             bits: self.capacity(),
-            vector: self.vector.iter().enumerate()
-            .map(|(i,x)| x ^ other.vector[i]).collect()
+            vector: self.vector.iter().zip(other.vector.iter())
+            .map(|(x1,x2)| x1 ^ x2).collect()
         }
     }
 
@@ -265,8 +260,8 @@ impl BitVector {
     /// No extra memory allocation
     pub fn union_inplace(&mut self, other: &BitVector) -> &mut BitVector {
         assert_eq!(self.capacity(), other.capacity());
-        for (i,v) in self.vector.iter_mut().enumerate() {
-            if *v != u64::max_value() { *v |= other.vector[i]; }
+        for (v,v2) in self.vector.iter_mut().zip(other.vector.iter()) {
+            if *v != u64::max_value() { *v |= *v2; }
         }
         self
     }
@@ -276,8 +271,8 @@ impl BitVector {
     /// No extra memory allocation
     pub fn intersection_inplace(&mut self, other: &BitVector) -> &mut BitVector {
         assert_eq!(self.capacity(), other.capacity());
-        for (i,v) in self.vector.iter_mut().enumerate() {
-            if *v != 0 { *v &= other.vector[i]; }
+        for (v,v2) in self.vector.iter_mut().zip(other.vector.iter()) {
+            if *v != 0 { *v &= *v2; }
         }
         self
     }
@@ -287,16 +282,16 @@ impl BitVector {
     /// No extra memory allocation
     pub fn difference_inplace(&mut self, other: &BitVector) -> &mut BitVector {
         assert_eq!(self.capacity(), other.capacity());
-        for (i,v) in self.vector.iter_mut().enumerate() {
-            if *v != 0 { *v = (*v ^ other.vector[i]) & *v }
+        for (v,v2) in self.vector.iter_mut().zip(other.vector.iter()) {
+            if *v != 0 { *v &= *v ^ *v2 }
         }
         self
     }
 
     pub fn difference_d_inplace(&mut self, other: &BitVector) -> &mut BitVector {
         assert_eq!(self.capacity(), other.capacity());
-        for (i,v) in self.vector.iter_mut().enumerate() {
-            *v ^= other.vector[i]
+        for (v,v2) in self.vector.iter_mut().zip(other.vector.iter()) {
+            *v ^= *v2;
         }
         self
     }
