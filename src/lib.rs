@@ -46,8 +46,8 @@
 //! BitVector always increases from the end to begin, it meats that if you add element `0` to an
 //! empty bitvector, then the `Vec<u64>` will change from `0x00` to `0x01`.
 //!
-//! Of course, if the real length of set can not be divided by 64, it will have a `capacity() % 64` bit
-//! memory waste.
+//! Of course, if the real length of set can not be divided by 64,
+//! it will have a `capacity() % 64` bit memory waste.
 //!
 
 #![cfg_attr(feature = "unstable", feature(test))]
@@ -79,7 +79,7 @@ impl PartialEq for BitVector {
 }
 
 impl BitVector {
-    /// Build a new empty bitvector 
+    /// Build a new empty bitvector
     pub fn new(bits: usize) -> Self {
         BitVector {
             bits: bits,
@@ -88,7 +88,7 @@ impl BitVector {
     }
 
     /// new bitvector contains all elements
-    /// 
+    ///
     /// If `bits % 64 > 0`, the last u64 is guaranteed not to
     /// have any extra 1 bits.
     pub fn ones(bits: usize) -> Self {
@@ -123,8 +123,8 @@ impl BitVector {
         }
     }
 
-    /// If `bit` belongs to set, return `true`, 
-    /// else return `false`.
+    /// If `bit` belongs to set, return `true`, else return `false`.
+    ///
     /// Insert, remove and contains do not do bound check.
     pub fn contains(&self, bit: usize) -> bool {
         let (word, mask) = word_mask(bit);
@@ -135,7 +135,7 @@ impl BitVector {
     ///
     /// self \cap {0, 1, ... , bit - 1} == other \cap {0, 1, ... ,bit - 1}
     ///
-    /// for example: 
+    /// for example:
     ///
     /// ```
     /// use bitvector::*;
@@ -145,15 +145,15 @@ impl BitVector {
     /// for i in vec![0, 1, 3 ,5 ,7, 10] { A.insert(i); }
     /// for i in vec![0, 1, 3, 4, 5, 7, 10] { B.insert(i); }
     ///
-    /// 
+    ///
     /// assert!(A.eq_left(&B, 1));  // [0             ]  = [0              ]
     /// assert!(A.eq_left(&B, 2));  // [0, 1          ]  = [0, 1           ]
-    /// assert!(A.eq_left(&B, 3));  // [0, 1          ]  = [0, 1           ] 
-    /// assert!(A.eq_left(&B, 4));  // [0, 1,   3     ]  = [0, 1,   3      ] 
-    /// assert!(!A.eq_left(&B, 5)); // [0, 1,   3     ] != [0, 1,   3, 4   ] 
-    /// assert!(!A.eq_left(&B, 6)); // [0, 1,   3,   5] != [0, 1,   3, 4, 5] 
+    /// assert!(A.eq_left(&B, 3));  // [0, 1          ]  = [0, 1           ]
+    /// assert!(A.eq_left(&B, 4));  // [0, 1,   3     ]  = [0, 1,   3      ]
+    /// assert!(!A.eq_left(&B, 5)); // [0, 1,   3     ] != [0, 1,   3, 4   ]
+    /// assert!(!A.eq_left(&B, 6)); // [0, 1,   3,   5] != [0, 1,   3, 4, 5]
     /// ```
-    /// 
+    ///
     pub fn eq_left(&self, other: &BitVector, bit: usize) -> bool {
         if bit == 0 {
             return true;
