@@ -64,10 +64,10 @@ pub struct BitVector {
 
 impl fmt::Display for BitVector {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        try!(write!(f, "["));
-        try!(write!(f,
+        write!(f, "[")?;
+        write!(f,
                     "{}",
-                    self.iter().fold(String::new(), |x0, x| x0 + &format!("{}, ", x))));
+                    self.iter().fold(String::new(), |x0, x| x0 + &format!("{}, ", x)))?;
         write!(f, "]")
     }
 }
@@ -127,6 +127,7 @@ impl BitVector {
     ///
     /// Insert, remove and contains do not do bound check.
     pub fn contains(&self, bit: usize) -> bool {
+        if bit > self.bits { return false }
         let (word, mask) = word_mask(bit);
         (self.vector[word] & mask) != 0
     }
@@ -338,6 +339,7 @@ impl BitVector {
     }
 
     fn grow(&mut self, num_bits: usize) {
+        self.bits = num_bits;
         let num_words = u64s(num_bits);
         if self.vector.len() < num_words {
             self.vector.resize(num_words, 0)
@@ -405,6 +407,39 @@ impl<'a> Iterator for BitVectorIter<'a> {
     }
 }
 
+macro_rules! impl_from_iterator {
+    ($t: tt) => {
+        impl FromIterator<$t> for BitVector {
+            fn from_iter<I>(iter: I) -> BitVector
+                where I: IntoIterator<Item = $t>
+            {
+                let iter = iter.into_iter();
+                let mut bv = BitVector::new(0);
+                for val in iter {
+                    let val = val as usize;
+                    if val >= bv.len() {
+                        bv.grow(val+1);
+                    }
+                    bv.insert(val);
+                }
+                bv
+            }
+        }
+    }
+}
+
+impl_from_iterator!(u8);
+impl_from_iterator!(u16);
+impl_from_iterator!(u32);
+impl_from_iterator!(u64);
+impl_from_iterator!(usize);
+impl_from_iterator!(i8);
+impl_from_iterator!(i16);
+impl_from_iterator!(i32);
+impl_from_iterator!(i64);
+impl_from_iterator!(isize);
+
+
 impl FromIterator<bool> for BitVector {
     fn from_iter<I>(iter: I) -> BitVector
         where I: IntoIterator<Item = bool>
@@ -420,8 +455,8 @@ impl FromIterator<bool> for BitVector {
         };
         let mut bv = BitVector::new(len);
         for (idx, val) in iter.enumerate() {
-            if idx > len {
-                bv.grow(idx);
+            if idx >= bv.len() {
+                bv.grow(idx+1);
             }
             if val {
                 bv.insert(idx);
@@ -527,6 +562,32 @@ fn word_mask(index: usize) -> (usize, u64) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn from_bool_iterator() {
+        let v = vec![true, false, false, false, true, true, false, true];
+        let bv = v.iter().cloned().collect::<BitVector>();
+        for i in 0 ..= 128 {
+            if *v.get(i).unwrap_or(&false) {
+                assert!(bv.contains(i));
+            } else {
+                assert!(!bv.contains(i));
+            }
+        }
+    }
+
+    #[test]
+    fn from_integer_iterator() {
+        let v = vec![6, 1, 5, 10, 12, 128];
+        let bv = v.iter().cloned().collect::<BitVector>();
+        for i in 0 ..= 128 {
+            if v.contains(&i) {
+                assert!(bv.contains(i));
+            } else {
+                assert!(!bv.contains(i));
+            }
+        }
+    }
+
     #[test]
     fn union_two_vecs() {
         let mut vec1 = BitVector::new(65);
