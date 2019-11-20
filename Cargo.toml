@@ -1,6 +1,6 @@
 [package]
 name = "bitvector"
-version = "0.1.3"
+version = "0.1.4"
 authors = ["Hongjie Zhai <zhaihj@live.jp>"]
 description = "BitVector implementation in Rust"
 documentation = "http://zhaihj.github.io/doc/bitvector/index.html"
