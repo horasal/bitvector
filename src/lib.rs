@@ -372,6 +372,85 @@ impl BitVector {
     }
 }
 
+impl std::iter::IntoIterator for BitVector {
+    type Item = usize;
+    type IntoIter = BitVectorIntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        BitVectorIntoIter {
+            content: self.vector,
+            slice_index: 0,
+            current: 0,
+            idx: 0,
+            size: self.bits,
+        }
+    }
+}
+
+
+impl<'a> std::iter::IntoIterator for &'a BitVector {
+    type Item = usize;
+    type IntoIter = BitVectorIter<'a>;
+    fn into_iter(self) -> Self::IntoIter {
+        BitVectorIter {
+            iter: self.vector.iter(),
+            current: 0,
+            idx: 0,
+            size: self.bits,
+        }
+    }
+}
+
+impl<'a> std::iter::IntoIterator for &'a mut BitVector {
+    type Item = usize;
+    type IntoIter = BitVectorIter<'a>;
+    fn into_iter(self) -> Self::IntoIter {
+        BitVectorIter {
+            iter: self.vector.iter(),
+            current: 0,
+            idx: 0,
+            size: self.bits,
+        }
+    }
+}
+
+pub struct BitVectorIntoIter {
+    content: Vec<u64>,
+    slice_index: usize,
+    current: u64,
+    idx: usize,
+    size: usize,
+}
+
+impl Iterator for BitVectorIntoIter {
+    type Item = usize;
+    fn next(&mut self) -> Option<usize> {
+        if self.idx >= self.size {
+            return None;
+        }
+        while self.current == 0 {
+            self.current = if let Some(&i) = self.content.get(self.slice_index) {
+                self.slice_index += 1;
+                if i == 0 {
+                    self.idx += 64;
+                    continue;
+                } else {
+                    self.idx = u64s(self.idx) * 64;
+                    i
+                }
+            } else {
+                return None;
+            }
+        }
+        let offset = self.current.trailing_zeros() as usize;
+        self.current >>= offset;
+        self.current >>= 1; // shift otherwise overflows for 0b1000_0000_…_0000
+        self.idx += offset + 1;
+        return Some(self.idx - 1);
+    }
+}
+
+
 /// Iterator for BitVector
 pub struct BitVectorIter<'a> {
     iter: ::std::slice::Iter<'a, u64>,
@@ -775,6 +854,12 @@ mod tests {
         bitvec.insert(99);
         assert_eq!(bitvec.iter().collect::<Vec<_>>(),
                    [1, 10, 19, 62, 63, 64, 65, 66, 99]);
+        assert_eq!((&bitvec).into_iter().collect::<Vec<_>>(),
+                   [1, 10, 19, 62, 63, 64, 65, 66, 99]);
+        assert_eq!((&mut bitvec).into_iter().collect::<Vec<_>>(),
+                   [1, 10, 19, 62, 63, 64, 65, 66, 99]);
+        assert_eq!(bitvec.into_iter().collect::<Vec<_>>(),
+                   [1, 10, 19, 62, 63, 64, 65, 66, 99]);
     }
 
 
@@ -787,6 +872,9 @@ mod tests {
         bitvec.insert(255);
         bitvec.insert(319);
         assert_eq!(bitvec.iter().collect::<Vec<_>>(), [0, 127, 191, 255, 319]);
+        assert_eq!((&bitvec).into_iter().collect::<Vec<_>>(), [0, 127, 191, 255, 319]);
+        assert_eq!((&mut bitvec).iter().collect::<Vec<_>>(), [0, 127, 191, 255, 319]);
+        assert_eq!(bitvec.into_iter().collect::<Vec<_>>(), [0, 127, 191, 255, 319]);
     }
 
     #[test]
