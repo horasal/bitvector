@@ -512,9 +512,11 @@ impl<'a> Iterator for BitVectorIter<'a> {
             }
         }
         let offset = self.current.trailing_zeros() as usize;
+            println!("trailing zero: {}", offset);
         self.current >>= offset;
         self.current >>= 1; // shift otherwise overflows for 0b1000_0000_…_0000
         self.idx += offset + 1;
+        println!("current: {:b}", self.current);
         return Some(self.idx - 1);
     }
 }
