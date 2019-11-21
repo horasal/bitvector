@@ -66,6 +66,7 @@ impl fmt::Display for BitVector {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "[")?;
         for x in self.iter() {
+            println!("encounted x {}", x);
             write!( f, "{}, ", x)?;
         }
         write!(f, "]")
@@ -185,6 +186,9 @@ impl BitVector {
     ///
     /// Insert, remove and contains do not do bound check.
     pub fn insert(&mut self, bit: usize) -> bool {
+        if bit >= self.bits {
+            self.grow(bit);
+        }
         let (word, mask) = word_mask(bit);
         let data = &mut self.vector[word];
         let value = *data;
@@ -676,6 +680,18 @@ mod tests {
         assert_eq!(format!("{}",bv), "[5, ]");
         bv.insert(4);
         assert_eq!(format!("{}",bv), "[4, 5, ]");
+        bv.insert(120);
+        assert_eq!(format!("{}",bv), "[4, 5, 120, ]");
+        bv.insert(1020999);
+        assert_eq!(format!("{}",bv), "[4, 5, 120, 1020999, ]");
+        bv.remove(5);
+        assert_eq!(format!("{}",bv), "[4, 120, 1020999, ]");
+        bv.remove(120);
+        assert_eq!(format!("{}",bv), "[4, 1020999, ]");
+        bv.remove(4);
+        assert_eq!(format!("{}",bv), "[1020999, ]");
+        bv.remove(1020999);
+        assert_eq!(format!("{}",bv), "[]");
     }
 
     #[test]
