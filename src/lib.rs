@@ -463,7 +463,6 @@ impl Iterator for BitVectorIntoIter {
         }
         while self.current == 0 {
             self.current = if let Some(&i) = self.content.get(self.slice_index) {
-                println!("{}:   {:b}", self.slice_index, i);
                 self.slice_index += 1;
                 if i == 0 {
                     self.idx += 64;
@@ -500,6 +499,7 @@ impl<'a> Iterator for BitVectorIter<'a> {
         }
         while self.current == 0 {
             self.current = if let Some(&i) = self.iter.next() {
+                println!("{}:   {:b}", self.idx, i);
                 if i == 0 {
                     self.idx += 64;
                     continue;
