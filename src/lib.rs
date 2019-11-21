@@ -66,7 +66,6 @@ impl fmt::Display for BitVector {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "[")?;
         for x in self.iter() {
-            println!("encounted x {}", x);
             write!( f, "{}, ", x)?;
         }
         write!(f, "]")
@@ -464,6 +463,7 @@ impl Iterator for BitVectorIntoIter {
         }
         while self.current == 0 {
             self.current = if let Some(&i) = self.content.get(self.slice_index) {
+                println!("{}:   {:b}", self.slice_index, i);
                 self.slice_index += 1;
                 if i == 0 {
                     self.idx += 64;
