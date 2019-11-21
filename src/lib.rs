@@ -458,7 +458,7 @@ pub struct BitVectorIntoIter {
 impl Iterator for BitVectorIntoIter {
     type Item = usize;
     fn next(&mut self) -> Option<usize> {
-        if self.idx >= self.size {
+        if self.idx > self.size {
             return None;
         }
         while self.current == 0 {
@@ -494,7 +494,7 @@ pub struct BitVectorIter<'a> {
 impl<'a> Iterator for BitVectorIter<'a> {
     type Item = usize;
     fn next(&mut self) -> Option<usize> {
-        if self.idx >= self.size {
+        if self.idx > self.size {
             return None;
         }
         while self.current == 0 {
