@@ -186,7 +186,7 @@ impl BitVector {
     /// Insert, remove and contains do not do bound check.
     pub fn insert(&mut self, bit: usize) -> bool {
         if bit >= self.bits {
-            self.grow(bit);
+            self.grow(bit+1);
         }
         let (word, mask) = word_mask(bit);
         let data = &mut self.vector[word];
