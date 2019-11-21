@@ -65,12 +65,9 @@ pub struct BitVector {
 impl fmt::Display for BitVector {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "[")?;
-        write!(
-            f,
-            "{}",
-            self.iter()
-                .fold(String::new(), |x0, x| x0 + &format!("{}, ", x))
-        )?;
+        for x in self.iter() {
+            write!( f, "{}, ", x)?;
+        }
         write!(f, "]")
     }
 }
@@ -670,6 +667,17 @@ fn word_mask(index: usize) -> (usize, u64) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn display() {
+        let mut bv = BitVector::new(10);
+        assert_eq!(format!("{}",bv), "[]");
+        bv.insert(5);
+        assert_eq!(format!("{}",bv), "[5, ]");
+        bv.insert(4);
+        assert_eq!(format!("{}",bv), "[4, 5, ]");
+    }
+
     #[test]
     fn from_bool_iterator() {
         let v = vec![true, false, false, false, true, true, false, true];
@@ -681,6 +689,21 @@ mod tests {
                 assert!(!bv.contains(i));
             }
         }
+    }
+
+    #[test]
+    fn insert() {
+        let mut bv = BitVector::new(10);
+        bv.insert(5);
+        assert_eq!(bv,vec![5].into_iter().collect::<BitVector>());
+        assert!(bv.contains(5));
+        assert!(!bv.contains(4));
+        assert!(!bv.contains(6));
+        bv.insert(4);
+        assert_eq!(bv,vec![4,5].into_iter().collect::<BitVector>());
+        assert!(bv.contains(5));
+        assert!(bv.contains(4));
+        assert!(!bv.contains(6));
     }
 
     #[test]
