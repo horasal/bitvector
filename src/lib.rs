@@ -18,6 +18,11 @@
 //!   // you can use Iterator to iter over all the elements
 //!   assert_eq!(bitvec.iter().collect::<Vec<_>>(), vec![0,1,2,3,4,5,6,7,8,9]);
 //!
+//!   // You can also use Iterator::collect
+//!   // supports all integer types.
+//!   let bitvec = (0..10).collect::<BitVector>();
+//!   assert_eq!(bitvec.iter().collect::<Vec<_>>(), vec![0,1,2,3,4,5,6,7,8,9]);
+//!
 //!   let mut bitvec2 = BitVector::new(30);
 //!   for i in 5 .. 15 { bitvec2.insert(i); }
 //!
@@ -45,9 +50,6 @@
 //! BitVector is realized with a `Vec<u64>`. Each bit of an u64 represent if a elements exists.
 //! BitVector always increases from the end to begin, it meats that if you add element `0` to an
 //! empty bitvector, then the `Vec<u64>` will change from `0x00` to `0x01`.
-//!
-//! Of course, if the real length of set can not be divided by 64,
-//! it will have a `capacity() % 64` bit memory waste.
 //!
 
 #![cfg_attr(feature = "unstable", feature(test))]
@@ -98,7 +100,7 @@ impl BitVector {
     /// new bitvector contains all elements
     ///
     /// If `bits % 64 > 0`, the last u64 is guaranteed not to
-    /// have any extra 1 bits.
+    /// have any extra bit.
     pub fn ones(bits: usize) -> Self {
         let (word, offset) = word_offset(bits);
         let mut bvec = vec![u64::max_value(); word];
@@ -111,12 +113,12 @@ impl BitVector {
     /// if set does not contain any elements, return true;
     /// else return false.
     ///
-    /// This method is averagely faster than `self.len() > 0`.
+    /// This method should be faster than `self.len() > 0`.
     pub fn is_empty(&self) -> bool {
         self.vector.iter().all(|&x| x == 0)
     }
 
-    /// the number of elements in set
+    /// number of elements in set
     pub fn len(&self) -> usize {
         self.vector
             .iter()
@@ -131,8 +133,6 @@ impl BitVector {
     }
 
     /// If `bit` belongs to set, return `true`, else return `false`.
-    ///
-    /// Insert, remove and contains do not do bound check.
     pub fn contains(&self, bit: usize) -> bool {
         if bit >= self.capacity() {
             return false;
@@ -205,32 +205,16 @@ impl BitVector {
     ///
     /// If value is removed, return true,
     /// if value doesn't exist in set, return false.
-    ///
-    /// Insert, remove and contains do not do bound check.
     pub fn remove(&mut self, bit: usize) -> bool {
+        if bit >= self.capacity() {
+            return false;
+        }
         let (word, mask) = word_mask(bit);
         let data = &mut self.vector[word];
         let value = *data;
         let new_value = value & !mask;
         *data = new_value;
         new_value != value
-    }
-
-    /// import elements from another bitvector
-    ///
-    /// If any new value is inserted, return true,
-    /// else return false.
-    pub fn insert_all(&mut self, all: &BitVector) -> bool {
-        assert!(self.vector.len() == all.vector.len());
-        let mut changed = false;
-        for (i, j) in self.vector.iter_mut().zip(&all.vector) {
-            let value = *i;
-            *i = value | *j;
-            if value != *i {
-                changed = true;
-            }
-        }
-        changed
     }
 
     /// the max number of elements can be inserted into set
@@ -718,23 +702,6 @@ mod tests {
                 assert!(!bv.contains(i));
             }
         }
-    }
-
-    #[test]
-    fn union_two_vecs() {
-        let mut vec1 = BitVector::new(65);
-        let mut vec2 = BitVector::new(65);
-        assert!(vec1.insert(3));
-        assert!(!vec1.insert(3));
-        assert!(vec2.insert(5));
-        assert!(vec2.insert(64));
-        assert!(vec1.insert_all(&vec2));
-        assert!(!vec1.insert_all(&vec2));
-        assert!(vec1.contains(3));
-        assert!(!vec1.contains(4));
-        assert!(vec1.contains(5));
-        assert!(!vec1.contains(63));
-        assert!(vec1.contains(64));
     }
 
     #[test]
