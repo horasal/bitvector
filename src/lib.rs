@@ -550,12 +550,7 @@ impl FromIterator<bool> for BitVector {
         let len = if len < 64 { 64 } else { len };
         let mut bv = BitVector::new(len);
         for (idx, val) in iter.enumerate() {
-            if idx >= bv.capacity() {
-                bv.grow(idx + 1);
-            }
-            if val {
-                bv.insert(idx);
-            }
+            if val { bv.insert(idx); }
         }
 
         bv
