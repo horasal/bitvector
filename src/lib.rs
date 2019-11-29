@@ -65,7 +65,7 @@ impl fmt::Display for BitVector {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "[")?;
         for x in self.iter() {
-            write!( f, "{}, ", x)?;
+            write!(f, "{}, ", x)?;
         }
         write!(f, "]")
     }
@@ -75,7 +75,7 @@ impl fmt::Debug for BitVector {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "[")?;
         for x in self.vector.iter() {
-            write!( f, "{:b} ", x)?;
+            write!(f, "{:b} ", x)?;
         }
         write!(f, "]")
     }
@@ -103,9 +103,7 @@ impl BitVector {
         let (word, offset) = word_offset(bits);
         let mut bvec = vec![u64::max_value(); word];
         bvec.push(u64::max_value() >> (64 - offset));
-        BitVector {
-            vector: bvec,
-        }
+        BitVector { vector: bvec }
     }
 
     /// return if this set is empty
@@ -193,7 +191,7 @@ impl BitVector {
     /// Insert, remove and contains do not do bound check.
     pub fn insert(&mut self, bit: usize) -> bool {
         if bit >= self.capacity() {
-            self.grow(bit+1);
+            self.grow(bit + 1);
         }
         let (word, mask) = word_mask(bit);
         let data = &mut self.vector[word];
@@ -242,7 +240,11 @@ impl BitVector {
 
     /// set union
     pub fn union(&self, other: &BitVector) -> BitVector {
-        let v = self.vector.iter().zip(other.vector.iter()).map(|(x1, x2)|  x1 | x2 );
+        let v = self
+            .vector
+            .iter()
+            .zip(other.vector.iter())
+            .map(|(x1, x2)| x1 | x2);
         let len1 = self.vector.len();
         let len2 = other.vector.len();
         if len1 > len2 {
@@ -550,7 +552,9 @@ impl FromIterator<bool> for BitVector {
         let len = if len < 64 { 64 } else { len };
         let mut bv = BitVector::new(len);
         for (idx, val) in iter.enumerate() {
-            if val { bv.insert(idx); }
+            if val {
+                bv.insert(idx);
+            }
         }
 
         bv
@@ -656,23 +660,23 @@ mod tests {
     #[test]
     fn display() {
         let mut bv = BitVector::new(10);
-        assert_eq!(format!("{}",bv), "[]");
+        assert_eq!(format!("{}", bv), "[]");
         bv.insert(5);
-        assert_eq!(format!("{}",bv), "[5, ]");
+        assert_eq!(format!("{}", bv), "[5, ]");
         bv.insert(4);
-        assert_eq!(format!("{}",bv), "[4, 5, ]");
+        assert_eq!(format!("{}", bv), "[4, 5, ]");
         bv.insert(120);
-        assert_eq!(format!("{}",bv), "[4, 5, 120, ]");
+        assert_eq!(format!("{}", bv), "[4, 5, 120, ]");
         bv.insert(1020999);
-        assert_eq!(format!("{}",bv), "[4, 5, 120, 1020999, ]");
+        assert_eq!(format!("{}", bv), "[4, 5, 120, 1020999, ]");
         bv.remove(5);
-        assert_eq!(format!("{}",bv), "[4, 120, 1020999, ]");
+        assert_eq!(format!("{}", bv), "[4, 120, 1020999, ]");
         bv.remove(120);
-        assert_eq!(format!("{}",bv), "[4, 1020999, ]");
+        assert_eq!(format!("{}", bv), "[4, 1020999, ]");
         bv.remove(4);
-        assert_eq!(format!("{}",bv), "[1020999, ]");
+        assert_eq!(format!("{}", bv), "[1020999, ]");
         bv.remove(1020999);
-        assert_eq!(format!("{}",bv), "[]");
+        assert_eq!(format!("{}", bv), "[]");
     }
 
     #[test]
@@ -692,12 +696,12 @@ mod tests {
     fn insert() {
         let mut bv = BitVector::new(10);
         bv.insert(5);
-        assert_eq!(bv,vec![5].into_iter().collect::<BitVector>());
+        assert_eq!(bv, vec![5].into_iter().collect::<BitVector>());
         assert!(bv.contains(5));
         assert!(!bv.contains(4));
         assert!(!bv.contains(6));
         bv.insert(4);
-        assert_eq!(bv,vec![4,5].into_iter().collect::<BitVector>());
+        assert_eq!(bv, vec![4, 5].into_iter().collect::<BitVector>());
         assert!(bv.contains(5));
         assert!(bv.contains(4));
         assert!(!bv.contains(6));
@@ -753,12 +757,23 @@ mod tests {
 
     #[test]
     fn bitvector_union2() {
-        let v1 = vec![1, 5, 100, 256, 1991].into_iter().collect::<BitVector>();
+        let v1 = vec![1, 5, 100, 256, 1991]
+            .into_iter()
+            .collect::<BitVector>();
         let v2 = vec![1, 2, 3, 100, 105].into_iter().collect::<BitVector>();
-        assert_eq!(v1.union(&v2), vec![1,2,3,5,100,105,256,1991].into_iter().collect::<BitVector>());
-        assert_eq!(v2.union(&v1), vec![1,2,3,5,100,105,256,1991].into_iter().collect::<BitVector>());
+        assert_eq!(
+            v1.union(&v2),
+            vec![1, 2, 3, 5, 100, 105, 256, 1991]
+                .into_iter()
+                .collect::<BitVector>()
+        );
+        assert_eq!(
+            v2.union(&v1),
+            vec![1, 2, 3, 5, 100, 105, 256, 1991]
+                .into_iter()
+                .collect::<BitVector>()
+        );
     }
-
 
     #[test]
     fn bitvector_intersection() {
@@ -782,10 +797,18 @@ mod tests {
 
     #[test]
     fn bitvector_intersection2() {
-        let v1 = vec![1, 5, 100, 256, 1991].into_iter().collect::<BitVector>();
+        let v1 = vec![1, 5, 100, 256, 1991]
+            .into_iter()
+            .collect::<BitVector>();
         let v2 = vec![1, 2, 3, 100, 105].into_iter().collect::<BitVector>();
-        assert_eq!(v1.intersection(&v2), vec![1,100].into_iter().collect::<BitVector>());
-        assert_eq!(v2.intersection(&v1), vec![1,100].into_iter().collect::<BitVector>());
+        assert_eq!(
+            v1.intersection(&v2),
+            vec![1, 100].into_iter().collect::<BitVector>()
+        );
+        assert_eq!(
+            v2.intersection(&v1),
+            vec![1, 100].into_iter().collect::<BitVector>()
+        );
     }
 
     #[test]
@@ -810,12 +833,30 @@ mod tests {
 
     #[test]
     fn bitvector_difference2() {
-        let v1 = vec![1, 5, 100, 256, 1991].into_iter().collect::<BitVector>();
+        let v1 = vec![1, 5, 100, 256, 1991]
+            .into_iter()
+            .collect::<BitVector>();
         let v2 = vec![1, 2, 3, 100, 105].into_iter().collect::<BitVector>();
-        assert_eq!(v1.difference(&v2), vec![5,256,1991].into_iter().collect::<BitVector>());
-        assert_eq!(v2.difference(&v1), vec![2,3,105].into_iter().collect::<BitVector>());
-        assert_eq!(v1.difference_d(&v2), vec![2,3,5,105,256,1991].into_iter().collect::<BitVector>());
-        assert_eq!(v2.difference_d(&v1), vec![2,3,5,105,256,1991].into_iter().collect::<BitVector>());
+        assert_eq!(
+            v1.difference(&v2),
+            vec![5, 256, 1991].into_iter().collect::<BitVector>()
+        );
+        assert_eq!(
+            v2.difference(&v1),
+            vec![2, 3, 105].into_iter().collect::<BitVector>()
+        );
+        assert_eq!(
+            v1.difference_d(&v2),
+            vec![2, 3, 5, 105, 256, 1991]
+                .into_iter()
+                .collect::<BitVector>()
+        );
+        assert_eq!(
+            v2.difference_d(&v1),
+            vec![2, 3, 5, 105, 256, 1991]
+                .into_iter()
+                .collect::<BitVector>()
+        );
     }
 
     #[test]
