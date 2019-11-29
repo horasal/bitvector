@@ -11,3 +11,6 @@ license = "MIT"
 
 [features]
 unstable=[]
+
+[dev-dependencies]
+rand = "0.7.2"
