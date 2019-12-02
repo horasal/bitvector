@@ -58,13 +58,13 @@ fn main() {
 ```
 
 
-### Performance Comparison against std/collections/Set
+### Performance Comparison against std::collections::{HashSet,BTreeSet}
 
 ```
-test bench::bench_bitset_operator         ... bench:         222 ns/iter (+/- 22)
-test bench::bench_bitset_operator_inplace ... bench:         122 ns/iter (+/- 5)
-test bench::bench_btreeset_operator       ... bench:       1,675 ns/iter (+/- 115)
-test bench::bench_hashset_operator        ... bench:       1,748 ns/iter (+/- 37)
+test bench::bench_bitset_operator         ... bench:         610 ns/iter (+/- 114)
+test bench::bench_bitset_operator_inplace ... bench:         377 ns/iter (+/- 21)
+test bench::bench_btreeset_operator       ... bench:       2,782 ns/iter (+/- 169)
+test bench::bench_hashset_operator        ... bench:       3,490 ns/iter (+/- 395)
 ```
 
 ### LICENSE
