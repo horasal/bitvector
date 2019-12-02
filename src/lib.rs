@@ -1121,9 +1121,9 @@ mod bench {
             for i in vec![3, 5, 7, 12, 13, 15, 21, 25, 30, 29, 42, 50, 61, 62, 63, 64] {
                 vec2.insert(i);
             }
-            vec1.intersection(&vec2);
-            vec1.union(&vec2);
-            vec1.difference(&vec2);
+            let _ = vec1.intersection(&vec2);
+            let _ = vec1.union(&vec2);
+            let _ = vec1.difference(&vec2);
         });
     }
 
@@ -1156,9 +1156,9 @@ mod bench {
                 vec2.insert(i);
             }
 
-            vec1.intersection(&vec2).cloned().collect::<HashSet<_>>();
-            vec1.union(&vec2).cloned().collect::<HashSet<_>>();
-            vec1.difference(&vec2).cloned().collect::<HashSet<_>>();
+            let _ = vec1.intersection(&vec2).cloned().collect::<HashSet<_>>();
+            let _ = vec1.union(&vec2).cloned().collect::<HashSet<_>>();
+            let _ = vec1.difference(&vec2).cloned().collect::<HashSet<_>>();
         });
     }
 
@@ -1174,9 +1174,9 @@ mod bench {
                 vec2.insert(i);
             }
 
-            vec1.intersection(&vec2).cloned().collect::<HashSet<_>>();
-            vec1.union(&vec2).cloned().collect::<HashSet<_>>();
-            vec1.difference(&vec2).cloned().collect::<HashSet<_>>();
+            let _ = vec1.intersection(&vec2).cloned().collect::<BTreeSet<_>>();
+            let _ = vec1.union(&vec2).cloned().collect::<BTreeSet<_>>();
+            let _ = vec1.difference(&vec2).cloned().collect::<BTreeSet<_>>();
         });
     }
 }
