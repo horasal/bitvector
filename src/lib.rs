@@ -99,12 +99,14 @@ impl BitVector {
 
     /// new bitvector contains all elements
     ///
-    /// If `bits % 64 > 0`, the last u64 is guaranteed not to
-    /// have any extra bit.
+    /// The last u64 is guaranteed not to
+    /// have any extra bit set.
     pub fn ones(bits: usize) -> Self {
         let (word, offset) = word_offset(bits);
         let mut bvec = vec![u64::max_value(); word];
-        bvec.push(u64::max_value() >> (64 - offset));
+        if offset > 0 {
+            bvec.push(u64::max_value() >> (64 - offset));
+        }
         BitVector { vector: bvec }
     }
 
@@ -1082,12 +1084,22 @@ mod tests {
 
     #[test]
     fn test_ones() {
-        let bvec = BitVector::ones(60);
-        for i in 0..60 {
-            assert!(bvec.contains(i));
+        let test_cases = &[10, 63, 64, 65, 127, 128, 129];
+        for &bit_count in test_cases {
+            let bvec = BitVector::ones(bit_count);
+            assert_eq!(bvec.iter().collect::<Vec<_>>(), (0..bit_count).collect::<Vec<_>>());
         }
-        assert_eq!(bvec.iter().collect::<Vec<_>>(), (0..60).collect::<Vec<_>>());
     }
+
+    #[test]
+    fn test_ones_correct_capacity() {
+        assert_eq!(BitVector::ones(0).capacity(), 0);
+        assert_eq!(BitVector::ones(1).capacity(), 64);
+        assert_eq!(BitVector::ones(63).capacity(), 64);
+        assert_eq!(BitVector::ones(64).capacity(), 64);
+        assert_eq!(BitVector::ones(65).capacity(), 128);
+    }
+
 
     #[test]
     fn len() {
