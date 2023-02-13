@@ -48,7 +48,7 @@
 //! ### Implementation Details
 //!
 //! BitVector is realized with a `Vec<u64>`. Each bit of an u64 represent if a elements exists.
-//! BitVector always increases from the end to begin, it meats that if you add element `0` to an
+//! BitVector always increases from the end to begin, it means that if you add element `0` to an
 //! empty bitvector, then the `Vec<u64>` will change from `0x00` to `0x01`.
 //!
 
